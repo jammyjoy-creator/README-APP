@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Local README Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Minimal clean styling -->
+    <style>
+        :root {
+          --bg: #0f172a;
+          --bg-alt: #111827;
+          --accent: #22c55e;
+          --accent-soft: rgba(34,197,94,0.15);
+          --text: #e5e7eb;
+          --text-muted: #9ca3af;
+          --border: #1f2937;
+          --danger: #f97373;
+          --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+          --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+
+        body {
+          background: radial-gradient(circle at top, #1f2937 0, #020617 60%);
+          color: var(--text);
+          font-family: var(--font-sans);
+          min-height: 100vh;
+          display: flex;
+          justify-content: center;
+          align-items: flex-start;
+          padding: 32px 16px;
+        }
+
+        .app {
+          width: 100%;
+          max-width: 1100px;
+          background: rgba(15, 23, 42, 0.95);
+          border-radius: 16px;
+          border: 1px solid rgba(148, 163, 184, 0.2);
+          box-shadow:
+            0 24px 60px rgba(15, 23, 42, 0.8),
+            0 0 0 1px rgba(148, 163, 184, 0.1);
+          padding: 24px;
+          backdrop-filter: blur(14px);
+        }
+
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .title {
+          font-size: 1.3rem;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .pill {
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          padding: 3px 8px;
+          border-radius: 999px;
+          border: 1px solid rgba(34,197,94,0.5);
+          color: var(--accent);
+          background: var(--accent-soft);
+        }
+
+        .subtitle {
+          font-size: 0.85rem;
+          color: var(--text-muted);
+          margin-bottom: 16px;
+        }
+
+        .layout {
+          display: grid;
+          grid-template-columns: 1.1fr 1.1fr;
+          gap: 16px;
+        }
+
+        @media (max-width: 900px) {
+          .layout {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        .panel {
+          background: linear-gradient(135deg, #020617 0%, #020617 40%, #020617 100%);
+          border-radius: 12px;
+          border: 1px solid var(--border);
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          min-height: 380px;
+        }
+
+        .panel-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+          gap: 8px;
+        }
+
+        .panel-title {
+          font-size: 0.85rem;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: var(--text-muted);
+        }
+
+        .panel-actions {
+          display: flex;
+          gap: 6px;
+          align-items: center;
+        }
+
+        textarea {
+          flex: 1;
+          width: 100%;
+          background: rgba(15, 23, 42, 0.9);
+          border-radius: 10px;
+          border: 1px solid #1e293b;
+          color: var(--text);
+          font-family: var(--font-mono);
+          font-size: 0.85rem;
+          padding: 10px 12px;
+          resize: vertical;
+          min-height: 270px;
+          outline: none;
+        }
+
+        textarea::placeholder {
+          color: #4b5563;
+        }
+
+        textarea:focus {
+          border-color: var(--accent);
+          box-shadow: 0 0 0 1px rgba(34,197,94,0.4);
+        }
+
+        .controls {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-top: 10px;
+          justify-content: flex-start;
+          flex-wrap: wrap;
+        }
+
+        .btn {
+          border-radius: 999px;
+          border: 1px solid rgba(148, 163, 184, 0.4);
+          background: #020617;
+          color: var(--text);
+          font-size: 0.82rem;
+          padding: 6px 14px;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.16s ease;
+        }
+
+        .btn-primary {
+          background: linear-gradient(135deg, #22c55e, #16a34a);
+          color: #022c22;
+          border-color: rgba(74, 222, 128, 0.6);
+          font-weight: 600;
+        }
+
+        .btn-primary:hover {
+          filter: brightness(1.05);
+          transform: translateY(-1px);
+          box-shadow: 0 10px 20px rgba(34, 197, 94, 0.35);
+        }
+
+        .btn:disabled {
+          opacity: 0.6;
+          cursor: default;
+          box-shadow: none;
+          transform: none;
+        }
+
+        .btn-icon {
+          font-size: 0.9rem;
+        }
+
+        .status {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .status-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #22c55e;
+          box-shadow: 0 0 8px rgba(34,197,94,0.8);
+        }
+
+        .status-dot.busy {
+          background: #eab308;
+          box-shadow: 0 0 8px rgba(234,179,8,0.8);
+        }
+
+        .status-dot.error {
+          background: var(--danger);
+          box-shadow: 0 0 8px rgba(248,113,113,0.8);
+        }
+
+        .output {
+          flex: 1;
+          background: radial-gradient(circle at top left, #0b1120 0%, #020617 60%);
+          border-radius: 10px;
+          border: 1px solid #1f2937;
+          padding: 12px 14px;
+          font-size: 0.86rem;
+          overflow: auto;
+        }
+
+        /* Basic Markdown styles */
+        .output h1, .output h2, .output h3 {
+          margin-top: 0.8em;
+          margin-bottom: 0.4em;
+          font-weight: 600;
+        }
+
+        .output h1 {
+          font-size: 1.3rem;
+        }
+
+        .output h2 {
+          font-size: 1.1rem;
+        }
+
+        .output h3 {
+          font-size: 1rem;
+        }
+
+        .output p {
+          margin-bottom: 0.45em;
+          line-height: 1.5;
+        }
+
+        .output ul {
+          padding-left: 1.1em;
+          margin-bottom: 0.45em;
+        }
+
+        .output li {
+          margin-bottom: 0.2em;
+        }
+
+        pre, code {
+          font-family: var(--font-mono);
+          font-size: 0.8rem;
+        }
+
+        pre {
+          background: #020617;
+          border-radius: 8px;
+          padding: 8px 10px;
+          overflow-x: auto;
+          border: 1px solid #1e293b;
+          margin-bottom: 0.6em;
+        }
+
+        code {
+          background: rgba(15,23,42,0.9);
+          padding: 2px 4px;
+          border-radius: 4px;
+        }
+
+        .error-banner {
+          margin-top: 8px;
+          font-size: 0.8rem;
+          color: var(--danger);
+        }
+
+        .badge-small {
+          font-size: 0.72rem;
+          padding: 2px 8px;
+          border-radius: 999px;
+          border: 1px solid rgba(148,163,184,0.5);
+          color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="header">
+        <div>
+            <div class="title">
+                Local README Generator
+                <span class="pill">Ollama · On-device</span>
+            </div>
+            <p class="subtitle">
+                Paste any Java, Python, or other code and generate a clean README.md locally. No cloud, no API keys.
+            </p>
+        </div>
+        <div class="badge-small">
+            Running on: <span id="runtime-label">llama3.2 (Ollama)</span>
+        </div>
+    </div>
+
+    <div class="layout">
+        <!-- LEFT: Input -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Source Code</div>
+                <div class="panel-actions">
+                    <button id="btn-clear" class="btn" type="button">
+                        <span class="btn-icon">✕</span> Clear
+                    </button>
+                </div>
+            </div>
+
+            <textarea id="code-input" placeholder="Paste your Java, Python, or other code here..."></textarea>
+
+            <div class="controls">
+                <button id="btn-generate" class="btn btn-primary" type="button">
+                    <span class="btn-icon">⚡</span>
+                    Generate README
+                </button>
+                <div class="status">
+                    <span id="status-dot" class="status-dot"></span>
+                    <span id="status-text">Idle · Ready</span>
+                </div>
+            </div>
+
+            <div id="error-banner" class="error-banner" style="display: none;"></div>
+        </div>
+
+        <!-- RIGHT: Output -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Generated README.md</div>
+                <div class="panel-actions">
+                    <button id="btn-copy" class="btn" type="button">
+                        <span class="btn-icon">📋</span> Copy
+                    </button>
+                    <button id="btn-download" class="btn" type="button">
+                        <span class="btn-icon">⬇</span> Download .md
+                    </button>
+                </div>
+            </div>
+            <div id="output" class="output">
+                <p style="color:#6b7280;">Generated README will appear here.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Minimal Markdown rendering using a tiny parser -->
+<script>
+    // Very small Markdown renderer (headings, lists, code blocks, paragraphs)
+    function renderMarkdown(md) {
+      if (!md) return "<p>No content</p>";
+
+      // Escape HTML
+      md = md.replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;");
+
+      // Code fences
+      md = md.replace(/```([\s\S]*?)```/g, function(_, code) {
+        return "<pre><code>" + code.trim() + "</code></pre>";
+      });
+
+      // Headings
+      md = md.replace(/^### (.*)$/gm, "<h3>$1</h3>");
+      md = md.replace(/^## (.*)$/gm, "<h2>$1</h2>");
+      md = md.replace(/^# (.*)$/gm, "<h1>$1</h1>");
+
+      // Lists
+      md = md.replace(/^[*-] (.*)$/gm, "<li>$1</li>");
+      md = md.replace(/(<li>[\s\S]*?<\/li>)/gm, "<ul>$1</ul>");
+
+      // Bold and inline code
+      md = md.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      md = md.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+      // Paragraphs
+      const lines = md.split(/\n{2,}/).map(block => {
+        if (block.match(/^<h[1-3]|^<ul>|^<pre>|^<\/ul>|^<li>|^<\/li>|^<pre>|^<\/pre>|^<code>|^<\/code>/)) {
+          return block;
+        }
+        return "<p>" + block.replace(/\n/g, "<br>") + "</p>";
+      });
+
+      return lines.join("\n");
+    }
+
+    const codeInput    = document.getElementById("code-input");
+    const outputEl     = document.getElementById("output");
+    const btnGenerate  = document.getElementById("btn-generate");
+    const btnClear     = document.getElementById("btn-clear");
+    const btnCopy      = document.getElementById("btn-copy");
+    const btnDownload  = document.getElementById("btn-download");
+    const statusDot    = document.getElementById("status-dot");
+    const statusText   = document.getElementById("status-text");
+    const errorBanner  = document.getElementById("error-banner");
+
+    let lastMarkdown = "";
+
+    function setStatus(state, message) {
+      statusDot.classList.remove("busy", "error");
+      if (state === "busy") {
+        statusDot.classList.add("busy");
+      } else if (state === "error") {
+        statusDot.classList.add("error");
+      }
+      statusText.textContent = message;
+    }
+
+    async function generateReadme() {
+      const code = codeInput.value.trim();
+      errorBanner.style.display = "none";
+      errorBanner.textContent = "";
+
+      if (!code) {
+        errorBanner.textContent = "Please paste some code first.";
+        errorBanner.style.display = "block";
+        return;
+      }
+
+      btnGenerate.disabled = true;
+      setStatus("busy", "Generating README with Ollama...");
+      outputEl.innerHTML = "<p style='color:#9ca3af;'>Generating README...</p>";
+
+      try {
+        const res = await fetch("/api/generate-readme", {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: code
+        });
+
+        const text = await res.text();
+        if (!res.ok) {
+          throw new Error(text || ("HTTP " + res.status));
+        }
+
+        lastMarkdown = text;
+        outputEl.innerHTML = renderMarkdown(text);
+        setStatus("idle", "Done · README generated locally");
+      } catch (err) {
+        setStatus("error", "Error while generating");
+        errorBanner.textContent = "Error: " + err.message;
+        errorBanner.style.display = "block";
+        outputEl.innerHTML = "<p style='color:#f97373;'>Failed to generate README.</p>";
+      } finally {
+        btnGenerate.disabled = false;
+      }
+    }
+
+    async function copyToClipboard() {
+      if (!lastMarkdown || !lastMarkdown.trim()) {
+        setStatus("error", "Nothing to copy yet");
+        return;
+      }
+
+      // Prefer modern Clipboard API when available and secure
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(lastMarkdown);
+          setStatus("idle", "Copied README to clipboard");
+          return;
+        } catch (err) {
+          // fall through to fallback
+        }
+      }
+
+      // Fallback: temporary textarea + execCommand
+      try {
+        const temp = document.createElement("textarea");
+        temp.value = lastMarkdown;
+        temp.style.position = "fixed";
+        temp.style.left = "-9999px";
+        temp.style.top = "-9999px";
+        document.body.appendChild(temp);
+        temp.focus();
+        temp.select();
+
+        const successful = document.execCommand("copy");
+        document.body.removeChild(temp);
+
+        if (successful) {
+          setStatus("idle", "Copied README to clipboard");
+        } else {
+          setStatus("error", "Copy failed (no clipboard permission)");
+        }
+      } catch (err) {
+        setStatus("error", "Copy failed");
+      }
+    }
+
+    function downloadMarkdown() {
+      if (!lastMarkdown) return;
+      const blob = new Blob([lastMarkdown], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "README.md";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    btnGenerate.addEventListener("click", generateReadme);
+    btnClear.addEventListener("click", () => {
+      codeInput.value = "";
+      lastMarkdown = "";
+      outputEl.innerHTML = "<p style='color:#6b7280;'>Generated README will appear here.</p>";
+      setStatus("idle", "Idle · Ready");
+      errorBanner.style.display = "none";
+    });
+    btnCopy.addEventListener("click", copyToClipboard);
+    btnDownload.addEventListener("click", downloadMarkdown);
+
+    // Allow Cmd/Ctrl+Enter to generate
+    codeInput.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        generateReadme();
+      }
+    });
+</script>
+</body>
+</html>
