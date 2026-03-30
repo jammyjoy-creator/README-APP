@@ -18,9 +18,9 @@ public class OpenAIService {
     @Value("${groq.api.key}")
     private String apiKey;
 
-    public String generateReadme(String code) {
+    // NEW: main method with verbosity
+    public String generateReadme(String code, String verbosity) {
         try {
-            // Groq OpenAI-compatible endpoint
             URL url = new URL("https://api.groq.com/openai/v1/chat/completions");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
@@ -29,11 +29,28 @@ public class OpenAIService {
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
 
+            // Normalize verbosity
+            String v = (verbosity == null ? "normal" : verbosity.trim().toLowerCase());
+            String verbosityInstruction;
+            switch (v) {
+                case "short" -> verbosityInstruction =
+                        "Tone and length: Keep the README concise. " +
+                                "Use short paragraphs and minimal examples. Avoid repeating information.\n\n";
+                case "detailed" -> verbosityInstruction =
+                        "Tone and length: Write a detailed, explanatory README. " +
+                                "Use multiple sentences per section and include extra context and clarifications, " +
+                                "but avoid pure fluff.\n\n";
+                default -> verbosityInstruction =
+                        "Tone and length: Use a balanced, medium level of detail. " +
+                                "Enough explanation to understand the project without being overly verbose.\n\n";
+            }
+
             String prompt =
                     "You are a senior software engineer.\n\n" +
                             "Generate a professional README.md for the following code.\n\n" +
                             "First, infer the main programming language (Java, Python, JavaScript, etc.) " +
                             "from the code itself and use that language consistently in the README.\n\n" +
+                            verbosityInstruction +
                             "Formatting requirements:\n" +
                             "- Output ONLY valid Markdown for a README.md file.\n" +
                             "- Do not add explanations before or after the Markdown.\n" +
@@ -71,7 +88,7 @@ public class OpenAIService {
             messages.put(message);
 
             JSONObject body = new JSONObject();
-            body.put("model", "llama-3.3-70b-versatile"); // Groq model name
+            body.put("model", "llama-3.3-70b-versatile");
             body.put("messages", messages);
             body.put("temperature", 0.7);
 
@@ -93,8 +110,9 @@ public class OpenAIService {
                 return "Error from Groq (" + status + "): " + response;
             }
 
-            JSONObject jsonResponse = new JSONObject(response);
+            JSONObject jsonResponse = new JSONObject();
 
+            jsonResponse = new JSONObject(response);
             return jsonResponse
                     .getJSONArray("choices")
                     .getJSONObject(0)
@@ -105,5 +123,10 @@ public class OpenAIService {
             e.printStackTrace();
             return "Error generating README: " + e.getMessage();
         }
+    }
+
+    // OLD signature kept as a convenience / fallback
+    public String generateReadme(String code) {
+        return generateReadme(code, "normal");
     }
 }

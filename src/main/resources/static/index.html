@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Local README Generator</title>
+    <title>README Generator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Minimal clean styling -->
     <style>
         :root {
           --bg: #0f172a;
@@ -234,7 +233,6 @@
           overflow: auto;
         }
 
-        /* Basic Markdown styles */
         .output h1, .output h2, .output h3 {
           margin-top: 0.8em;
           margin-bottom: 0.4em;
@@ -307,15 +305,16 @@
     <div class="header">
         <div>
             <div class="title">
-                Local README Generator
-                <span class="pill">Ollama · On-device</span>
+                README Generator
+                <span class="pill">Groq · Cloud LLM</span>
             </div>
             <p class="subtitle">
-                Paste any Java, Python, or other code and generate a clean README.md locally. No cloud, no API keys.
+                Paste any Java, Python, Go, or other code and generate a professional README.md.
+                Powered by a hosted Groq model. Avoid pasting secrets or production credentials.
             </p>
         </div>
         <div class="badge-small">
-            Running on: <span id="runtime-label">llama3.2 (Ollama)</span>
+            Running on: <span id="runtime-label">llama‑3.3‑70B (Groq API)</span>
         </div>
     </div>
 
@@ -331,13 +330,20 @@
                 </div>
             </div>
 
-            <textarea id="code-input" placeholder="Paste your Java, Python, or other code here..."></textarea>
+            <textarea id="code-input" placeholder="Paste your Java, Python, Go, or other code here..."></textarea>
 
             <div class="controls">
                 <button id="btn-generate" class="btn btn-primary" type="button">
                     <span class="btn-icon">⚡</span>
                     Generate README
                 </button>
+
+                <select id="verbosity-select" class="btn" style="padding-right: 10px;">
+                    <option value="short">Short</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="detailed">Detailed</option>
+                </select>
+
                 <div class="status">
                     <span id="status-dot" class="status-dot"></span>
                     <span id="status-text">Idle · Ready</span>
@@ -365,38 +371,37 @@
             </div>
         </div>
     </div>
+
+    <p class="subtitle" style="margin-top: 18px; font-size: 0.78rem; border-top: 1px solid rgba(148,163,184,0.25); padding-top: 10px;">
+        Built by <strong>SammyJoe Macri</strong> — feedback:
+        <a href="mailto:jammyjoe01@gmail.com" style="color:#93c5fd; text-decoration:none;">
+            jammyjoe01@gmail.com
+        </a>
+    </p>
 </div>
 
-<!-- Minimal Markdown rendering using a tiny parser -->
 <script>
-    // Very small Markdown renderer (headings, lists, code blocks, paragraphs)
     function renderMarkdown(md) {
       if (!md) return "<p>No content</p>";
 
-      // Escape HTML
       md = md.replace(/&/g, "&amp;")
              .replace(/</g, "&lt;")
              .replace(/>/g, "&gt;");
 
-      // Code fences
       md = md.replace(/```([\s\S]*?)```/g, function(_, code) {
         return "<pre><code>" + code.trim() + "</code></pre>";
       });
 
-      // Headings
       md = md.replace(/^### (.*)$/gm, "<h3>$1</h3>");
       md = md.replace(/^## (.*)$/gm, "<h2>$1</h2>");
       md = md.replace(/^# (.*)$/gm, "<h1>$1</h1>");
 
-      // Lists
       md = md.replace(/^[*-] (.*)$/gm, "<li>$1</li>");
       md = md.replace(/(<li>[\s\S]*?<\/li>)/gm, "<ul>$1</ul>");
 
-      // Bold and inline code
       md = md.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
       md = md.replace(/`([^`]+)`/g, "<code>$1</code>");
 
-      // Paragraphs
       const lines = md.split(/\n{2,}/).map(block => {
         if (block.match(/^<h[1-3]|^<ul>|^<pre>|^<\/ul>|^<li>|^<\/li>|^<pre>|^<\/pre>|^<code>|^<\/code>/)) {
           return block;
@@ -416,6 +421,7 @@
     const statusDot    = document.getElementById("status-dot");
     const statusText   = document.getElementById("status-text");
     const errorBanner  = document.getElementById("error-banner");
+    const verbositySelect = document.getElementById("verbosity-select");
 
     let lastMarkdown = "";
 
@@ -440,12 +446,14 @@
         return;
       }
 
+      const verbosity = verbositySelect.value;
+
       btnGenerate.disabled = true;
-      setStatus("busy", "Generating README with Ollama...");
-      outputEl.innerHTML = "<p style='color:#9ca3af;'>Generating README...</p>";
+      setStatus("busy", "Generating README with Groq (cloud)...");
+      outputEl.innerHTML = "<p style='color:#9ca3af;'>Generating README via Groq API...</p>";
 
       try {
-        const res = await fetch("/api/generate-readme", {
+        const res = await fetch("/api/generate-readme?verbosity=" + encodeURIComponent(verbosity), {
           method: "POST",
           headers: { "Content-Type": "text/plain" },
           body: code
@@ -458,7 +466,7 @@
 
         lastMarkdown = text;
         outputEl.innerHTML = renderMarkdown(text);
-        setStatus("idle", "Done · README generated locally");
+        setStatus("idle", "Done · README generated via cloud API");
       } catch (err) {
         setStatus("error", "Error while generating");
         errorBanner.textContent = "Error: " + err.message;
@@ -475,18 +483,16 @@
         return;
       }
 
-      // Prefer modern Clipboard API when available and secure
       if (navigator.clipboard && window.isSecureContext) {
         try {
           await navigator.clipboard.writeText(lastMarkdown);
           setStatus("idle", "Copied README to clipboard");
           return;
         } catch (err) {
-          // fall through to fallback
+          // fall through
         }
       }
 
-      // Fallback: temporary textarea + execCommand
       try {
         const temp = document.createElement("textarea");
         temp.value = lastMarkdown;
@@ -534,7 +540,6 @@
     btnCopy.addEventListener("click", copyToClipboard);
     btnDownload.addEventListener("click", downloadMarkdown);
 
-    // Allow Cmd/Ctrl+Enter to generate
     codeInput.addEventListener("keydown", (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
         generateReadme();

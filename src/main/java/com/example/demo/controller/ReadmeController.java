@@ -17,7 +17,10 @@ public class ReadmeController {
             consumes = MediaType.TEXT_PLAIN_VALUE,
             produces = MediaType.TEXT_PLAIN_VALUE
     )
-    public String generateReadme(@RequestBody String code) {
-        return openAIService.generateReadme(code);
+    public String generateReadme(
+            @RequestBody String code,
+            @RequestParam(name = "verbosity", defaultValue = "normal") String verbosity
+    ) {
+        return openAIService.generateReadme(code, verbosity);
     }
 }
